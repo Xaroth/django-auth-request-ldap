@@ -90,7 +90,7 @@ class Group(CustomRDNModel):
             self.gid = workgroup.get_max_gid()
             workgroup.save()
         self._samba_sid = workgroup.format_group_sid(self.gid)
-        self.usernames = list(set([x.split(',', 1)[0].split('=', 1)[0] for x in self.members]))
+        self.usernames = list(set([x.split(',', 1)[0].split('=', 1)[-1] for x in self.members]))
         if not self.description:
             self.description = '.'
 
