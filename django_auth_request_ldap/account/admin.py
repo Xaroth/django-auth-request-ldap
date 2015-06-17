@@ -12,7 +12,6 @@ from .forms import UserCreationForm, UserChangeForm, GroupEditForm, GroupCreatio
 
 class LogEntryQuerySet(models.QuerySet):
     def select_related(self, *args):
-        print("SELECT RELATED")
         prefetch_user = False
         if 'user' in args:
             args = [x for x in args if x != 'user']
