@@ -1,0 +1,29 @@
+dn: cn=module,cn=config
+cn: module
+objectClass: olcModuleList
+objectClass: top
+olcModulePath: /usr/lib/ldap
+olcModuleLoad: memberof.la
+
+dn: cn=module,cn=config
+cn: module
+objectClass: olcModuleList
+objectClass: top
+olcModulePath: /usr/lib/ldap
+olcModuleLoad: refint.la
+
+dn: olcOverlay={0}memberof,olcDatabase={1}hdb,cn=config
+objectClass: olcConfig
+objectClass: olcMemberOf
+objectClass: olcOverlayConfig
+objectClass: top
+olcOverlay: memberof
+
+dn: olcOverlay={1}refint,olcDatabase={1}hdb,cn=config
+objectClass: olcConfig
+objectClass: olcOverlayConfig
+objectClass: olcRefintConfig
+objectClass: top
+olcOverlay: {1}refint
+olcRefintAttribute: memberOf member
+olcRefintNothing: cn=admin,@DOMAIN@

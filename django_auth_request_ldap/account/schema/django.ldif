@@ -1,0 +1,29 @@
+# AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.
+dn: cn=django,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: django
+olcAttributeTypes: {0}( 1.3.6.1.4.1.7165.1.1.2.1 NAME 'djangoPermission' DESC 
+ 'A Permission' EQUALITY caseExactIA5Match SUBSTR caseExactIA5SubstringsMatch 
+ SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+olcAttributeTypes: {1}( 1.3.6.1.4.1.7165.1.1.2.2 NAME 'djangoStaff' DESC 'A St
+ aff indicator' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SING
+ LE-VALUE )
+olcAttributeTypes: {2}( 1.3.6.1.4.1.7165.1.1.2.3 NAME 'djangoSuper' DESC 'A Su
+ peruser indicator' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 
+ SINGLE-VALUE )
+olcAttributeTypes: {3}( 1.3.6.1.4.1.7165.1.1.2.4 NAME 'djangoActive' DESC 'Ind
+ icator if user is active' EQUALITY booleanMatch SYNTAX 1.3.6.1.4.1.1466.115.1
+ 21.1.7 SINGLE-VALUE )
+olcAttributeTypes: {4}( 1.3.6.1.4.1.7165.1.1.2.5 NAME 'djangoCreated' DESC 'Ti
+ mestamp of creation' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.
+ 27 SINGLE-VALUE )
+olcAttributeTypes: {5}( 1.3.6.1.4.1.7165.1.1.2.6 NAME 'djangoLastLogon' DESC '
+ Timestamp of last logon' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.12
+ 1.1.27 SINGLE-VALUE )
+olcAttributeTypes: {6}( 1.3.6.1.4.1.7165.1.1.2.7 NAME 'sshPublicKey' DESC 'SSH
+  Public Key' EQUALITY octetStringMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+olcObjectClasses: {0}( 1.3.6.1.4.1.7165.1.1.1.1 NAME 'djangoUser' SUP top AUXI
+ LIARY MUST ( djangoStaff $ djangoSuper $ djangoActive $ djangoCreated ) MAY (
+  djangoLastLogon $ djangoPermission $ sshPublicKey ) )
+olcObjectClasses: {1}( 1.3.6.1.4.1.7165.1.1.1.2 NAME 'djangoGroup' SUP top AUX
+ ILIARY MAY djangoPermission )

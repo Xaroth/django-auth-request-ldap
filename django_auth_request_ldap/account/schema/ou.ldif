@@ -1,0 +1,26 @@
+dn: ou=people,@DOMAIN@
+ou: people
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=machines,@DOMAIN@
+ou: machines
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=groups,@DOMAIN@
+ou: groups
+objectClass: top
+objectClass: organizationalUnit
+
+dn: sambaDomainName=WORKGROUP,@DOMAIN@
+objectClass: top
+objectClass: sambaUnixIdPool
+objectClass: sambaDomain
+gidNumber: 2000
+uidNumber: 2000
+sambaNextRid: 2000
+sambaNextUserRid: 2000
+sambaNextGroupRid: 2000
+sambaDomainName: WORKGROUP
+sambaSID: @NETSID@

@@ -1,0 +1,44 @@
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.1 NAME 'djangoPermission'
+    DESC 'A Permission'
+    EQUALITY caseExactIA5Match
+    SUBSTR caseExactIA5SubstringsMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.2 NAME 'djangoStaff'
+    DESC 'A Staff indicator'
+    EQUALITY booleanMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.3 NAME 'djangoSuper'
+    DESC 'A Superuser indicator'
+    EQUALITY booleanMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.4 NAME 'djangoActive'
+    DESC 'Indicator if user is active'
+    EQUALITY booleanMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.5 NAME 'djangoCreated'
+    DESC 'Timestamp of creation'
+    EQUALITY integerMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.6 NAME 'djangoLastLogon'
+    DESC 'Timestamp of last logon'
+    EQUALITY integerMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.7165.1.1.2.7 NAME 'sshPublicKey'
+    DESC 'SSH Public Key'
+    EQUALITY octetStringMatch
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+
+objectclass ( 1.3.6.1.4.1.7165.1.1.1.1 NAME 'djangoUser'
+    SUP top AUXILIARY
+    MUST ( djangoStaff $ djangoSuper $ djangoActive $ djangoCreated )
+    MAY ( djangoLastLogon $ djangoPermission $ sshPublicKey ) )
+
+objectclass ( 1.3.6.1.4.1.7165.1.1.1.2 NAME 'djangoGroup'
+    SUP top AUXILIARY
+    MAY djangoPermission )

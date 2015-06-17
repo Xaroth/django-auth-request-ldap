@@ -55,3 +55,5 @@ docs/_build/
 
 # PyBuilder
 target/
+django_auth_request_ldap/django_auth_request_ldap/local_settings.py
+*.sqlite3
