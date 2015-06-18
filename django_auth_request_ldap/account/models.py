@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from ldapdb.models.fields import CharField, ListField
 
-from .util import process_shells, CustomRDNModel
+from .utils import process_shells, CustomRDNModel
 from .fields import DefaultListField, BooleanField, SimpleRelationField, DateTimeField, IntField
 
 LDAP_DN_SUFFIX = getattr(settings, 'LDAP_DN_SUFFIX', '')
