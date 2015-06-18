@@ -82,10 +82,7 @@ DATABASE_ROUTERS = [
 ]
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    },
+    'default': AUDIT_DATABASE,
     'ldap': {
         'ENGINE':   'ldapdb.backends.ldap',
         'NAME':     'ldapi:///',
