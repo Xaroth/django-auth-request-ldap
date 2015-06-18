@@ -53,6 +53,11 @@ class SambaDomainName(CustomRDNModel):
     def get_max_uid(self):
         return self.get_max(User, 'id', 'uid')
 
+    class Meta:
+        verbose_name = _('samba domain name')
+        verbose_name_plural = _('samba domain names')
+        managed = False
+
 
 @python_2_unicode_compatible
 class Group(CustomRDNModel):
@@ -100,6 +105,7 @@ class Group(CustomRDNModel):
     class Meta:
         verbose_name = _('group')
         verbose_name_plural = _('groups')
+        managed = False
 
 username_validator = validators.RegexValidator(r'^[\w.@+-]+$', _('Enter a valid username. '
                                                                  'This value may contain only letters, numbers '
@@ -328,3 +334,4 @@ class User(CustomRDNModel):
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
+        managed = False
