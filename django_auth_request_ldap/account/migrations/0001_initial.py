@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'user',
                 'verbose_name_plural': 'users',
-                'managed': False,
             }
         ),
         migrations.CreateModel(
@@ -29,7 +28,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'group',
                 'verbose_name_plural': 'groups',
-                'managed': False,
             }
         ),
         migrations.CreateModel(
@@ -42,7 +40,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'samba domain name',
                 'verbose_name_plural': 'samba domain names',
-                'managed': False,
             }
         ),
     ]
