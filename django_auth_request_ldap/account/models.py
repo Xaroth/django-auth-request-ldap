@@ -1,12 +1,8 @@
-from django.contrib import auth
 from django.conf import settings
 from django.core import validators
 from django.db import DEFAULT_DB_ALIAS, router
 from django.core.mail import send_mail
-from django.db import models
-from django.utils.crypto import get_random_string
-from django.utils.encoding import force_text, smart_text, python_2_unicode_compatible
-from django.utils.safestring import mark_safe
+from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from ldapdb.models.fields import CharField, ListField
