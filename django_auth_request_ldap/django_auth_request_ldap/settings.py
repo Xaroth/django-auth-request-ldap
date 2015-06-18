@@ -28,6 +28,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = (
     'account',
     'suit',
+    'auth_request',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -72,6 +73,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 AUTH_USER_MODEL = "account.User"
+AUTH_GROUP_MODEL = "account.Group"
 
 
 # Database
@@ -116,3 +118,9 @@ SUIT_CONFIG = {
     'ADMIN_NAME': 'LDAP Auth',
     'LIST_PER_PAGE': 50,
 }
+
+ACCOUNT_MIGRATION_APPS = [
+    ("admin", "LogEntry", "user", "__first__"),
+    ("auth_request", "ZoneUser", "user", "__first__"),
+    ("auth_request", "ZoneGroup", "group", None),
+]

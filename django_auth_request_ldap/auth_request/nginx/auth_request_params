@@ -1,0 +1,6 @@
+proxy_set_header    Content-Length      "";
+proxy_set_header    Host                $http_host;
+proxy_set_header    X-Original-URI      $request_uri;
+proxy_set_header    X-Forwarded-By      $server_addr:$server_port;
+proxy_set_header    X-Forwarded-For     $remote_addr;
+proxy_set_header    X-Forwarded-Proto   $scheme;
