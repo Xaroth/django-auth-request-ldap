@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=128)),
                 ('code', models.SlugField(max_length=128)),
+                ('access', models.IntegerField(default=0, verbose_name='access', choices=[(0, 'Default'), (1, 'Allowed'), (2, 'Denied')])),
                 ('enabled', models.BooleanField(default=True)),
             ],
         ),

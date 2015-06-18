@@ -29,6 +29,7 @@ INSTALLED_APPS = (
     'account',
     'suit',
     'auth_request',
+    'django_select2',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

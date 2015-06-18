@@ -16,6 +16,7 @@ ZONE_ACCESS = [
 class Zone(models.Model):
     name = models.CharField(max_length=128)
     code = models.SlugField(max_length=128)
+    access = models.IntegerField(_("access"), choices=ZONE_ACCESS, default=ZONE_ACCESS_DEFAULT)
     enabled = models.BooleanField(default=True)
 
 
