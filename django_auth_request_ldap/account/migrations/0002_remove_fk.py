@@ -4,69 +4,43 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 from django.conf import settings
 
-ACCOUNT_MIGRATION_APPS = getattr(settings, "ACCOUNT_MIGRATION_APPS", [("account", "LogEntry", "user")])
+ACCOUNT_MIGRATION_APPS = getattr(settings, "ACCOUNT_MIGRATION_APPS", [("admin", "LogEntry", "user", "__first__")])
 
 
-class SpecialAlterField(migrations.AlterField):
+class RemoteModel(object):
     def __init__(self, app_label, *args, **kwargs):
         self.app_label = app_label
-        super(SpecialAlterField, self).__init__(*args, **kwargs)
+        super(RemoteModel, self).__init__(*args, **kwargs)
 
     def state_forwards(self, app_label, state):
-        super(SpecialAlterField, self).state_forwards(self.app_label, state)
+        super(RemoteModel, self).state_forwards(self.app_label, state)
 
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        super(SpecialAlterField, self).database_forwards(self.app_label, schema_editor, from_state, to_state)
+        super(RemoteModel, self).database_forwards(self.app_label, schema_editor, from_state, to_state)
 
     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        super(SpecialAlterField, self).database_backwards(self.app_label, schema_editor, from_state, to_state)
+        super(RemoteModel, self).database_backwards(self.app_label, schema_editor, from_state, to_state)
 
     def deconstruct(self):
-        kwargs = {
-            'app_label': self.app_label,
-            'model_name': self.model_name,
-            'name': self.name,
-            'field': self.field,
-        }
-        if self.preserve_default is not True:
-            kwargs['preserve_default'] = self.preserve_default
-        return (
-            self.__class__.__name__,
-            [],
-            kwargs
-        )
+        name, args, kwargs = super(RemoteModel, self).deconstruct()
+        kwargs['app_label'] = self.app_label
+        return (name, args, kwargs)
 
 
-class SpecialRenameField(migrations.RenameField):
-    def __init__(self, app_label, *args, **kwargs):
-        self.app_label = app_label
-        super(SpecialRenameField, self).__init__(*args, **kwargs)
+class SpecialAlterField(RemoteModel, migrations.AlterField):
+    pass
 
-    def state_forwards(self, app_label, state):
-        super(SpecialRenameField, self).state_forwards(self.app_label, state)
 
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        super(SpecialRenameField, self).database_forwards(self.app_label, schema_editor, from_state, to_state)
+class SpecialRenameField(RemoteModel, migrations.RenameField):
+    pass
 
-    def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        super(SpecialRenameField, self).database_backwards(self.app_label, schema_editor, from_state, to_state)
 
-    def deconstruct(self):
-        kwargs = {
-            'app_label': self.app_label,
-            'model_name': self.model_name,
-            'old_name': self.old_name,
-            'new_name': self.new_name,
-        }
-        return (
-            self.__class__.__name__,
-            [],
-            kwargs
-        )
+class SpecialAlterModelOptions(RemoteModel, migrations.AlterModelOptions):
+    pass
 
 
 def build_ops():
-    for app_label, model_name, field_name in ACCOUNT_MIGRATION_APPS:
+    for app_label, model_name, field_name, dep_name in ACCOUNT_MIGRATION_APPS:
         yield SpecialRenameField(
             app_label=app_label,
             model_name=model_name,
@@ -76,11 +50,15 @@ def build_ops():
             app_label=app_label,
             model_name=model_name,
             name="%s_id" % field_name,
-            field=models.IntegerField())
+            field=models.IntegerField(null=False, default=-1))
+        yield SpecialAlterModelOptions(
+            app_label=app_label,
+            name=model_name,
+            options={'managed': 'False'})
 operations = list(build_ops())
-dependencies = [(app_label, '0001_initial') for app_label, model_name, field_name in ACCOUNT_MIGRATION_APPS]
+dependencies = [(app_label, dep_name) for app_label, model_name, field_name, dep_name in ACCOUNT_MIGRATION_APPS if dep_name]
 
 
 class Migration(migrations.Migration):
-    dependencies = dependencies
+    dependencies = [('account', '0001_initial')] + dependencies
     operations = operations
