@@ -2,6 +2,9 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+from django.conf import settings
+
+ACCOUNT_MIGRATION_APPS = getattr(settings, "ACCOUNT_MIGRATION_APPS", [("account", "LogEntry", "user")])
 
 
 class SpecialAlterField(migrations.AlterField):
@@ -62,14 +65,22 @@ class SpecialRenameField(migrations.RenameField):
         )
 
 
+def build_ops():
+    for app_label, model_name, field_name in ACCOUNT_MIGRATION_APPS:
+        yield SpecialRenameField(
+            app_label=app_label,
+            model_name=model_name,
+            old_name=field_name,
+            new_name="%s_id" % field_name)
+        yield SpecialAlterField(
+            app_label=app_label,
+            model_name=model_name,
+            name="%s_id" % field_name,
+            field=models.IntegerField())
+operations = list(build_ops())
+dependencies = [(app_label, '0001_initial') for app_label, model_name, field_name in ACCOUNT_MIGRATION_APPS]
+
+
 class Migration(migrations.Migration):
-
-    dependencies = [
-        ('admin', '0001_initial'),
-        ('account', '0001_initial'),
-    ]
-
-    operations = [
-        SpecialRenameField(app_label="admin", model_name="LogEntry", old_name="user", new_name="user_id"),
-        SpecialAlterField(app_label="admin", model_name="LogEntry", name="user_id", field=models.IntegerField()),
-    ]
+    dependencies = dependencies
+    operations = operations
