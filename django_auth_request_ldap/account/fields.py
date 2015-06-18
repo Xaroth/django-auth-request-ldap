@@ -319,7 +319,11 @@ class IntField(LDAPIntegerField):
     def get_db_prep_lookup(self, lookup_type, value, connection,
                            prepared=False):
         "Returns field's value prepared for database lookup."
-        return [self.get_prep_lookup(lookup_type, value)]
+        prepped = self.get_prep_lookup(lookup_type, value)
+        if connection.alias != router.db_for_read(self.model):
+            if isinstance(prepped, (list, tuple)):
+                return prepped
+        return [prepped]
 
     def get_db_prep_save(self, value, connection):
         if value is None:

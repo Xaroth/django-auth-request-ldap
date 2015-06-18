@@ -30,8 +30,11 @@ class Migration(migrations.Migration):
                 ('access', models.IntegerField(default=0, verbose_name='access', choices=[(0, 'Default'), (1, 'Allowed'), (2, 'Denied')])),
                 ('group', models.ForeignKey(related_name='+', to=settings.AUTH_GROUP_MODEL)),
                 ('zone', models.ForeignKey(related_name='groups', to='auth_request.Zone')),
+                ('order', models.IntegerField(default=10, verbose_name='order of importance')),
             ],
-            options={},
+            options={
+                'ordering': ['order'],
+            },
         ),
         migrations.CreateModel(
             name='ZoneUser',
@@ -40,8 +43,11 @@ class Migration(migrations.Migration):
                 ('access', models.IntegerField(default=0, verbose_name='access', choices=[(0, 'Default'), (1, 'Allowed'), (2, 'Denied')])),
                 ('user', models.ForeignKey(related_name='+', to=settings.AUTH_USER_MODEL)),
                 ('zone', models.ForeignKey(related_name='users', to='auth_request.Zone')),
+                ('order', models.IntegerField(default=10, verbose_name='order of importance')),
             ],
-            options={},
+            options={
+                'ordering': ['order'],
+            },
         ),
         migrations.CreateModel(
             name='LogEntry',
@@ -55,6 +61,8 @@ class Migration(migrations.Migration):
                 ('user', models.ForeignKey(related_name='+', to=settings.AUTH_USER_MODEL)),
                 ('zone', models.ForeignKey(blank=True, to='auth_request.Zone', null=True)),
             ],
-            options={},
+            options={
+                'ordering': ['timestamp'],
+            },
         ),
     ]
