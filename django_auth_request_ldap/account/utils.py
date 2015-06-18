@@ -3,8 +3,17 @@ from django.conf import settings
 from django.contrib import auth
 
 import ldapdb
+from ldapdb.router import Router as LDAPDBRouter
 
 LDAP_DN_SUFFIX = getattr(settings, 'LDAP_DN_SUFFIX', '')
+ALLOWED_LDAP_RELATIONS = getattr(settings, 'ALLOWED_LDAP_RELATIONS', [])
+
+
+class Router(LDAPDBRouter):
+    def allow_relation(self, obj, to):
+        obj_name = '%s.%s' % (obj._meta.app_label, obj._meta.object_name)
+        to_name = '%s.%s' % (to._meta.app_label, to._meta.object_name)
+        return obj._state.db == to._state.db or (obj_name, to_name) in ALLOWED_LDAP_RELATIONS
 
 
 def process_shells(items):

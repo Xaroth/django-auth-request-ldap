@@ -9,6 +9,7 @@ from ldapdb.models.fields import CharField, ListField
 
 from .utils import process_shells, CustomRDNModel
 from .fields import DefaultListField, BooleanField, SimpleRelationField, DateTimeField, IntField
+from .manager import LDAPManager
 
 LDAP_DN_SUFFIX = getattr(settings, 'LDAP_DN_SUFFIX', '')
 
@@ -27,6 +28,8 @@ class SambaDomainName(CustomRDNModel):
     domain_name = CharField(db_column='sambaDomainName', primary_key=True)
     sambaSID = CharField(db_column='sambaSID')
     uid = IntField(db_column='uidNumber')
+
+    objects = LDAPManager()
 
     def format_user_sid(self, uid):
         return "%s-%s" % (self.sambaSID, (uid * 2))
@@ -69,6 +72,8 @@ class Group(CustomRDNModel):
         'groupOfNames',
         'top',
     ]
+
+    objects = LDAPManager()
 
     def build_rdn(self):
         return 'cn=%s' % self.name
@@ -129,6 +134,8 @@ class User(CustomRDNModel):
         'shadowAccount',
         'top',
     ]
+
+    objects = LDAPManager()
 
     def build_rdn(self):
         return 'uid=%s' % self.username

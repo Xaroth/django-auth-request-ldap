@@ -81,7 +81,7 @@ AUTH_GROUP_MODEL = "account.Group"
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASE_ROUTERS = [
-    'ldapdb.router.Router',
+    'account.utils.Router',
 ]
 
 DATABASES = {
