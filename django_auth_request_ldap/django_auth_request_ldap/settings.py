@@ -124,6 +124,7 @@ ACCOUNT_MIGRATION_APPS = [
     ("admin", "LogEntry", "user", "__first__"),
     ("auth_request", "ZoneUser", "user", "__first__"),
     ("auth_request", "ZoneGroup", "group", None),
+    ("auth_request", "LogEntry", "user", None),
 ]
 
 ALLOWED_LDAP_RELATIONS = [
