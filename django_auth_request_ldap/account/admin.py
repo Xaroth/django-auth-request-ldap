@@ -23,7 +23,11 @@ class LogEntryQuerySet(models.QuerySet):
         if prefetch_user:
             qs = qs.prefetch_related('user')
         return qs
-LogEntry.objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
+
+
+class LogEntryQuerySetManager(LogEntryManager.from_queryset(LogEntryQuerySet)):
+    pass
+LogEntry.objects = LogEntryQuerySetManager()
 LogEntry.objects.contribute_to_class(LogEntry, 'objects')
 
 
