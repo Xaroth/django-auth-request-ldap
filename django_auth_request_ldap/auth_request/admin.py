@@ -40,6 +40,7 @@ class ZoneUserForm(forms.ModelForm):
             'all': ('django_select2/css/select2.min.css',)
         }
 
+
 class ZoneGroupForm(forms.ModelForm):
     group_verbose_name = Group._meta.verbose_name
     group = GroupChoices(
