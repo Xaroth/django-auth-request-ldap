@@ -131,4 +131,5 @@ ACCOUNT_MIGRATION_APPS = [
 ALLOWED_LDAP_RELATIONS = [
     ('account.User', 'auth_request.ZoneUser'),
     ('account.Group', 'auth_request.ZoneGroup'),
+    ('account.User', 'auth_request.LogEntry'),
 ]
