@@ -35,6 +35,10 @@ class ZoneUserForm(forms.ModelForm):
         model = ZoneUser
         fields = '__all__'
 
+    class Media:
+        css = {
+            'all': ('django_select2/css/select2.min.css',)
+        }
 
 class ZoneGroupForm(forms.ModelForm):
     group_verbose_name = Group._meta.verbose_name
@@ -51,6 +55,11 @@ class ZoneGroupForm(forms.ModelForm):
     class Meta:
         model = ZoneGroup
         fields = '__all__'
+
+    class Media:
+        css = {
+            'all': ('django_select2/css/select2.min.css',)
+        }
 
 
 class ZoneGroupAdmin(admin.TabularInline):
