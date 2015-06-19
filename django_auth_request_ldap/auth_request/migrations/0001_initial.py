@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                 ('zone', models.ForeignKey(blank=True, to='auth_request.Zone', null=True)),
             ],
             options={
-                'ordering': ['timestamp'],
+                'ordering': ['-timestamp'],
                 'verbose_name': 'Log Entry',
                 'verbose_name_plural': 'Log Entries',
             },

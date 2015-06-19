@@ -15,6 +15,7 @@ import time
 
 ZONE_ACCESS_CACHE_TIME = getattr(settings, "ZONE_ACCESS_CACHE_TIME", 0)
 ZONE_ACCESS_LOG_CACHED = getattr(settings, "ZONE_ACCESS_LOG_CACHED", False)
+ZONE_ACCESS_ALLOWED_LOG_THRESHOLD = getattr(settings, "ZONE_ACCESS_ALLOWED_LOG_THRESHOLD", 0)
 ZONE_ACCESS_DEFAULT_RESPONSE = getattr(settings, "ZONE_ACCESS_DEFAULT_RESPONSE", ZONE_ACCESS_DENIED)
 
 ACTIONS_FOR_ACCESS = {
@@ -63,6 +64,11 @@ class Zone(models.Model):
         return entry
 
     def log_access(self, user, cached=False):
+        if ZONE_ACCESS_ALLOWED_LOG_THRESHOLD:
+            key = 'zone__log_access__%s_%s' % (self.pk, user.pk)
+            if cache.get(key, False):
+                return None
+            cache.set(key, True, ZONE_ACCESS_ALLOWED_LOG_THRESHOLD)
         message = "user requested access"
         return self.log_message(user, ACTION_ACCESS, message, extra_data=("cached response" if cached else ''))
 
@@ -99,6 +105,7 @@ class Zone(models.Model):
         key = 'auth_request__process__%s_%s' % (zone_key, user.pk)
 
         def _stor(action, response, zone):
+            print(repr((action, response, zone)))
             cache.set(key, (action, response), ZONE_ACCESS_CACHE_TIME)
             if zone:
                 zone.log_by_action(user, action, False)
@@ -117,18 +124,39 @@ class Zone(models.Model):
         try:
             zone = Zone.objects.get(code=zone_key)
         except Zone.DoesNotExist:
-            return _stor(ACTION_UNKNOWN, ZONE_ACCESS_DEFAULT, None)
+            return _stor(ACTION_UNKNOWN, ZONE_ACCESS_DEFAULT_RESPONSE, None)
 
         if not zone.enabled:
             return _stor(ACTION_DISABLED, ZONE_ACCESS_DENIED, zone)
 
         default_access, grouprules, userrules, response, cached = zone.access_for_user(user)
+        print(repr((default_access, grouprules, userrules, response, cached)))
 
         return _stor(
             ACTIONS_FOR_ACCESS[response],
             response,
             zone
         )
+
+    @classmethod
+    def process_login(self, zone_key, user):
+        try:
+            zone = Zone.objects.get(code=zone_key)
+        except Zone.DoesNotExist:
+            print("no zone")
+            return False
+
+        if not zone.enabled:
+            print("zone not enabled")
+            return False
+        default_access, grouprules, userrules, response, cached = zone.access_for_user(user)
+
+        print(repr((default_access, grouprules, userrules, response, cached)))
+
+        if response == ZONE_ACCESS_ALLOWED:
+            zone.log_by_action(user, ACTION_LOGIN)
+            return True
+        return False
 
     def __str__(self):
         return self.name
@@ -179,7 +207,7 @@ class LogEntry(models.Model):
     extra_data = models.CharField(max_length=127)
 
     class Meta:
-        ordering = ['timestamp']
+        ordering = ['-timestamp']
         verbose_name = _("Log Entry")
         verbose_name_plural = _("Log Entries")
 
