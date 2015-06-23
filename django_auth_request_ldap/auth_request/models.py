@@ -9,20 +9,86 @@ from operator import attrgetter
 
 from .enums import (ZONE_ACCESS_DEFAULT, ZONE_ACCESS_ALLOWED, ZONE_ACCESS_DENIED, ZONE_ACCESS, ZONE_ACCESS_DISPLAY,
                     ACTION_ACCESS, ACTION_DENIED, ACTION_LOGIN, ACTION_LOGOUT, ACTION_DISABLED, ACTION_UNKNOWN,
-                    LOG_ACTIONS)
+                    ACCESS_DISPLAY)
 
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 ZONE_ACCESS_CACHE_TIME = getattr(settings, "ZONE_ACCESS_CACHE_TIME", 0)
-ZONE_ACCESS_LOG_CACHED = getattr(settings, "ZONE_ACCESS_LOG_CACHED", False)
-ZONE_ACCESS_ALLOWED_LOG_THRESHOLD = getattr(settings, "ZONE_ACCESS_ALLOWED_LOG_THRESHOLD", 0)
+ZONE_ACCESS_LOG_CACHED = getattr(settings, "ZONE_ACCESS_LOG_CACHED", 0)
 ZONE_ACCESS_DEFAULT_RESPONSE = getattr(settings, "ZONE_ACCESS_DEFAULT_RESPONSE", ZONE_ACCESS_DENIED)
 
-ACTIONS_FOR_ACCESS = {
-    ZONE_ACCESS_ALLOWED: ACTION_ACCESS,
-    ZONE_ACCESS_DENIED: ACTION_DENIED,
-}
-ACTIONS_FOR_ACCESS[ZONE_ACCESS_DEFAULT] = ACTIONS_FOR_ACCESS.get(ZONE_ACCESS_DEFAULT_RESPONSE)
+
+class AccessMatrix(object):
+    def __init__(self, zone, user, group_rules, user_rules):
+        self.zone = zone
+        self.user = user
+        self.group_rules = group_rules
+        self.user_rules = user_rules
+
+    @property
+    def user_pk(self):
+        return self.user.pk if self.user.is_authenticated() else 0
+
+    def _cache_matrix(self, key, rules):
+        key = '_cache_matrix_%d_%d_%s' % (self.zone.pk, self.user_pk, key)
+        if ZONE_ACCESS_CACHE_TIME:
+            data = cache.get(key, None)
+            if data is not None:
+                setattr(self, key, data[0])
+                return data
+        data = getattr(self, key, None)
+        if data is not None:
+            return data, None
+        data = self.process_rules(rules)
+        setattr(self, key, data)
+        if ZONE_ACCESS_CACHE_TIME:
+            cache.set(key, (data, time.time()), ZONE_ACCESS_CACHE_TIME)
+        return data, None
+
+    @property
+    def rules(self):
+        return self.group_rules + self.user_rules
+
+    def process_rules(self, rules):
+        print("process_rules")
+        rules = sorted(rules, key=attrgetter("order"))
+        access = self.zone.access
+        logger.debug("Default access for matrix: %s", ZONE_ACCESS_DISPLAY[access])
+        for rule in rules:
+            if rule.access != ZONE_ACCESS_DEFAULT:
+                access = rule.access
+            logger.debug(
+                "%d: Applied rule for %s %s: %s, new active access: %s",
+                rule.order,
+                rule.object.__class__.__name__,
+                rule.object,
+                ZONE_ACCESS_DISPLAY[rule.access],
+                ZONE_ACCESS_DISPLAY[access]
+            )
+        logger.debug("Done processing access: %s", ZONE_ACCESS_DISPLAY[access])
+        return access
+
+    @property
+    def allowed(self):
+        return self._cache_matrix('all', self.rules)
+
+    @property
+    def allowed_by_group(self):
+        return self._cache_matrix('group', self.group_rules)
+
+    @property
+    def allowed_by_user(self):
+        return self._cache_matrix('user', self.user_rules)
+
+    def __bool__(self):
+        return self.allowed
+    __nonzero__ = __bool__
+
+    def __repr__(self):
+        return "<AccessMatrix: %r: %r>" % (self.zone, self.user)
 
 
 @python_2_unicode_compatible
@@ -32,131 +98,80 @@ class Zone(models.Model):
     access = models.IntegerField(_("access"), choices=ZONE_ACCESS, default=ZONE_ACCESS_DEFAULT)
     enabled = models.BooleanField(default=True)
 
-    def access_for_user(self, user):
-        key = 'auth_request__access_for_user__%s_%s' % (self.pk, user.pk)
-        cached = cache.get(key, None)
-        if cached is not None and ZONE_ACCESS_CACHE_TIME:
-            return cached
+    def for_user(self, user):
+        if not user.is_authenticated():
+            return AccessMatrix(self, user, [], [])
         groups = user.groups.all()
-        grouprules = list(self.groups.filter(group_id__in=[g.pk for g in groups]))
-        userrules = list(self.users.filter(user=user))
-        all_rules = sorted(grouprules + userrules, key=attrgetter('order'))
+        group_rules = list(self.groups.filter(group_id__in=[g.pk for g in groups]))
+        user_rules = list(self.users.filter(user=user))
+        return AccessMatrix(self, user, group_rules, user_rules)
 
-        access = self.access
-        for rule in all_rules:
-            if rule.access == ZONE_ACCESS_DEFAULT:
-                continue
-            access = rule.access
-        data = (self.access, len(grouprules), len(userrules), access)
+    @classmethod
+    def process_request(self, user, zone_key):
+        if not user.is_authenticated():
+            user_pk = 0
+        else:
+            user_pk = user.pk
+        key = 'process_%s_%s' % (zone_key, user_pk)
+
         if ZONE_ACCESS_CACHE_TIME:
-            cache.set(key, data + (time.time(),), ZONE_ACCESS_CACHE_TIME)
-        return data + (False,)
-
-    def log_message(self, user, action, message, extra_data=None):
-        entry = LogEntry(
-            zone=self,
-            user=user,
-            username=getattr(user, user.USERNAME_FIELD),
-            action=action,
-            message=message,
-            extra_data=extra_data or '')
-        entry.save()
-        return entry
-
-    def log_access(self, user, cached=False):
-        if ZONE_ACCESS_ALLOWED_LOG_THRESHOLD:
-            key = 'zone__log_access__%s_%s' % (self.pk, user.pk)
-            if cache.get(key, False):
-                return None
-            cache.set(key, True, ZONE_ACCESS_ALLOWED_LOG_THRESHOLD)
-        message = "user requested access"
-        return self.log_message(user, ACTION_ACCESS, message, extra_data=("cached response" if cached else ''))
-
-    def log_denied(self, user, cached=False):
-        message = "user denied access"
-        return self.log_message(user, ACTION_DENIED, message, extra_data=("cached response" if cached else ''))
-
-    def log_disabled(self, user, cached=False):
-        message = "user requested access to a disabled zone"
-        return self.log_message(user, ACTION_DISABLED, message, extra_data=("cached response" if cached else ''))
-
-    def log_login(self, user, cached=False):
-        message = "user logged in"
-        return self.log_message(user, ACTION_ACCESS, message, extra_data=getattr(user, user.USERNAME_FIELD))
-
-    def log_logout(self, user, cached=False):
-        message = "user logged out"
-        return self.log_message(user, ACTION_ACCESS, message, extra_data=getattr(user, user.USERNAME_FIELD))
-
-    def log_by_action(self, user, action, cached=False):
-        handlers = {
-            ACTION_ACCESS: self.log_access,
-            ACTION_DENIED: self.log_denied,
-            ACTION_DISABLED: self.log_disabled,
-            ACTION_LOGIN: self.log_login,
-            ACTION_LOGOUT: self.log_logout,
-        }
-        if action in handlers:
-            return handlers[action](user, cached)
-        return None
-
-    @classmethod
-    def process_access_request(self, zone_key, user):
-        key = 'auth_request__process__%s_%s' % (zone_key, user.pk)
-
-        def _stor(action, response, zone):
-            print(repr((action, response, zone)))
-            cache.set(key, (action, response), ZONE_ACCESS_CACHE_TIME)
-            if zone:
-                zone.log_by_action(user, action, False)
-            return action, response
-
-        cached = cache.get(key, None)
-        if cached is not None and ZONE_ACCESS_CACHE_TIME:
-            action, response = cached
-            if action == ACTION_UNKNOWN:
-                return action, response
-            if ZONE_ACCESS_LOG_CACHED:
-                zone = Zone.objects.get(code=zone_key)
-                zone.log_by_action(user, action, cached=True)
-            return action, response
+            data = cache.get(key, None)
+            if data is not None:
+                return data
 
         try:
             zone = Zone.objects.get(code=zone_key)
         except Zone.DoesNotExist:
-            return _stor(ACTION_UNKNOWN, ZONE_ACCESS_DEFAULT_RESPONSE, None)
+            return ACTION_UNKNOWN, None
 
-        if not zone.enabled:
-            return _stor(ACTION_DISABLED, ZONE_ACCESS_DENIED, zone)
+        data = zone.process(user)
 
-        default_access, grouprules, userrules, response, cached = zone.access_for_user(user)
-        print(repr((default_access, grouprules, userrules, response, cached)))
+        if ZONE_ACCESS_CACHE_TIME:
+            cache.set(key, (data, time.time()), ZONE_ACCESS_CACHE_TIME)
+        return data, None
 
-        return _stor(
-            ACTIONS_FOR_ACCESS[response],
-            response,
-            zone
-        )
+    def do_log(self, matrix, action):
+        allowed, cached_at = matrix.allowed
+        user_pk = matrix.user_pk
+        key = 'do_log_%s_%s_%s' % (user_pk, matrix.zone.pk, allowed)
+        username = "<ANONYMOUS>" if user_pk == 0 else getattr(matrix.user, matrix.user.USERNAME_FIELD)
+        if ZONE_ACCESS_LOG_CACHED:
+            if cache.get(key, None):
+                return
+            cache.set(key, True, ZONE_ACCESS_LOG_CACHED)
+        logger.info("request to zone '%s' resulted in '%s'(%s) / '%s'(%s) for user '%s'(%d)",
+                    self.code,
+                    ZONE_ACCESS_DISPLAY[allowed],
+                    allowed,
+                    ACCESS_DISPLAY[action],
+                    action,
+                    username,
+                    user_pk,
+                    )
 
-    @classmethod
-    def process_login(self, zone_key, user):
-        try:
-            zone = Zone.objects.get(code=zone_key)
-        except Zone.DoesNotExist:
-            print("no zone")
-            return False
+    def process(self, user):
+        if not self.enabled:
+            return ACTION_DISABLED
 
-        if not zone.enabled:
-            print("zone not enabled")
-            return False
-        default_access, grouprules, userrules, response, cached = zone.access_for_user(user)
+        matrix = self.for_user(user)
 
-        print(repr((default_access, grouprules, userrules, response, cached)))
+        def _log(action):
+            self.do_log(matrix, action)
+            return action
 
-        if response == ZONE_ACCESS_ALLOWED:
-            zone.log_by_action(user, ACTION_LOGIN)
-            return True
-        return False
+        access, cached_at = matrix.allowed
+        if access == ZONE_ACCESS_DEFAULT:
+            access = ZONE_ACCESS_DEFAULT_RESPONSE
+
+        if access == ZONE_ACCESS_DENIED:
+            if not user.is_authenticated():
+                return _log(ACTION_LOGIN)
+            return _log(ACTION_DENIED)
+
+        if access == ZONE_ACCESS_DENIED:
+            return _log(ACTION_DENIED)
+
+        return _log(ACTION_ACCESS)
 
     def __str__(self):
         return self.name
@@ -168,6 +183,10 @@ class ZoneUser(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="+")
     access = models.IntegerField(_("access"), choices=ZONE_ACCESS, default=ZONE_ACCESS_DEFAULT)
     order = models.IntegerField(_("order of importance"), default=10)
+
+    @property
+    def object(self):
+        return self.user
 
     class Meta:
         ordering = ['order']
@@ -186,6 +205,10 @@ class ZoneGroup(models.Model):
     access = models.IntegerField(_("access"), choices=ZONE_ACCESS, default=ZONE_ACCESS_DEFAULT)
     order = models.IntegerField(_("order of importance"), default=10)
 
+    @property
+    def object(self):
+        return self.group
+
     class Meta:
         ordering = ['order']
 
@@ -194,22 +217,3 @@ class ZoneGroup(models.Model):
 
     def __str__(self):
         return force_text(self.group)
-
-
-@python_2_unicode_compatible
-class LogEntry(models.Model):
-    timestamp = models.DateTimeField(default=timezone.now)
-    zone = models.ForeignKey(Zone, null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="+")
-    username = models.CharField(max_length=90)
-    action = models.CharField(max_length=24, choices=LOG_ACTIONS)
-    message = models.CharField(max_length=127)
-    extra_data = models.CharField(max_length=127)
-
-    class Meta:
-        ordering = ['-timestamp']
-        verbose_name = _("Log Entry")
-        verbose_name_plural = _("Log Entries")
-
-    def __str__(self):
-        return force_text(self.timestamp)

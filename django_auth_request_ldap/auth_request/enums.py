@@ -18,11 +18,10 @@ ACTION_DENIED = "access_denied"
 ACTION_DISABLED = "zone_disabled"
 ACTION_UNKNOWN = "zone_unknown"
 
-LOG_ACTIONS = [
-    (ACTION_ACCESS, _("Access")),
-    (ACTION_LOGIN, _("Logged In")),
-    (ACTION_LOGOUT, _("Logged Out")),
-    (ACTION_DENIED, _("Access Denied")),
-    (ACTION_DISABLED, _("Zone Disabled")),
-    (ACTION_UNKNOWN, _("Zone Unknown")),
-]
+ACCESS_DISPLAY = {
+    ACTION_ACCESS: _("Access Granted"),
+    ACTION_LOGIN: _("Login Required"),
+    ACTION_DENIED: _("Access Denied"),
+    ACTION_DISABLED: _("Zone Disabled"),
+    ACTION_UNKNOWN: _("Zone Unknown"),
+}

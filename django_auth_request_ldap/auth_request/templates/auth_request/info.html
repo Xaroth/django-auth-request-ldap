@@ -1,0 +1,57 @@
+{% extends "admin/login.html" %}
+{% load i18n admin_static suit_tags %}
+
+{% block extrastyle %}
+<style>
+.uneditable-input {
+    cursor: default;
+    color: #000;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" style="width: 540px; margin-left: -270px; top: 25%;">
+    <h1><i class="icon-globe icon-white"></i> {% firstof zone.name zone_name %}</h1>
+    <form class="form-horizontal" style="margin-top: 0px">
+        <div class="form-row control-group">
+            <label class="control-label">Zone Name:</label><span class="input-xlarge uneditable-input">{% firstof zone.name "Unknown Zone" %}</span>
+        </div>
+        <div class="form-row control-group">
+            <label class="control-label">Calculated Access:</label><span class="input-xlarge uneditable-input">{{access_display}}</span>
+        </div>
+{% if redirect_to %}
+        <div class="form-row control-group">
+            <label class="control-label">Redirect To:</label><span class="input-xlarge uneditable-input">{{redirect_to}}</span>
+        </div>
+{% endif %}
+{% if grouprules or userrules %}
+        <h2>Applied rules</h2>
+        <div class="form-row control-group">
+            <label class="control-label">Default access:</label><span class="input-xlarge uneditable-input">{{zone.get_access_display}}</span>
+        </div>
+{% if grouprules %}
+        <h3>Group rules</h3>
+    {% for grule in grouprules %}
+        <div class="form-row control-group">
+            <label class="control-label">{{grule.order}}: {{grule.group}}</label><span class="input-xlarge uneditable-input">{{grule.get_access_display}}</span>
+        </div>
+    {% endfor %}
+{% endif %}
+{% if userrules %}
+        <h3>User rules</h3>
+    {% for urule in userrules %}
+        <div class="form-row control-group">
+            <label class="control-label">{{urule.order}}: {{urule.group}}</label><span class="input-xlarge uneditable-input">{{urule.get_access_display}}</span>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endif %}
+        <div class="submit-row">
+            <a href="?apply=1" class="btn btn-primary">Execute</a>
+        </div>
+    </form>
+</div>
+{% endblock content %}
+
+{% block footer %}{% endblock footer %}

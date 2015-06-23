@@ -18,7 +18,7 @@
     {% endif %}
 
     <div id="content-main">
-        <h1><i class="icon-lock icon-white"></i> {{ 'ADMIN_NAME'|suit_conf }}</h1>
+        <h1><i class="icon-lock icon-white"></i> {% trans 'Login required' %}</h1>
 
         <form action="{{ app_path }}" method="post" id="login-form"><div class="hide">{% csrf_token %}</div>
             <div class="form-row control-group{% if not form.this_is_the_login_form.errors and form.username.errors %} error{% endif %}">
@@ -30,7 +30,6 @@
               {% if not form.this_is_the_login_form.errors and form.password.errors %}<div class="help-block">{{ form.password.errors }}</div>{% endif %}
                 <input type="hidden" name="this_is_the_login_form" value="1"/>
                 <input type="hidden" name="next" value="{{ next }}"/>
-                <input type="hidden" name="zone" value="{{ zone }}"/>
             </div>
             {% url 'admin_password_reset' as password_reset_url %}
             {% if password_reset_url %}

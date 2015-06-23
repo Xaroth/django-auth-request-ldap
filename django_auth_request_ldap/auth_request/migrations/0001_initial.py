@@ -49,22 +49,4 @@ class Migration(migrations.Migration):
                 'ordering': ['order'],
             },
         ),
-        migrations.CreateModel(
-            name='LogEntry',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('timestamp', models.DateTimeField(default=django.utils.timezone.now)),
-                ('username', models.CharField(max_length=90)),
-                ('action', models.CharField(max_length=24, choices=[(b'access', 'Access'), (b'login', 'Logged In'), (b'logout', 'Logged Out'), (b'access_denied', 'Access Denied'), (b'zone_disabled', 'Zone Disabled'), (b'zone_unknown', 'Zone Unknown')])),
-                ('message', models.CharField(max_length=127)),
-                ('extra_data', models.CharField(max_length=127)),
-                ('user', models.ForeignKey(related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('zone', models.ForeignKey(blank=True, to='auth_request.Zone', null=True)),
-            ],
-            options={
-                'ordering': ['-timestamp'],
-                'verbose_name': 'Log Entry',
-                'verbose_name_plural': 'Log Entries',
-            },
-        ),
     ]

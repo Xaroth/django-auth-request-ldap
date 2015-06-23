@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.apps import apps as django_apps
-from .models import Zone, ZoneUser, ZoneGroup, LogEntry
+from .models import Zone, ZoneUser, ZoneGroup
 from django_select2 import AutoModelSelect2Field, AutoHeavySelect2Widget
 
 User = django_apps.get_model(settings.AUTH_USER_MODEL)
@@ -84,37 +84,4 @@ class ZoneAdmin(admin.ModelAdmin):
         ZoneUserAdmin,
     ]
 
-
-class LogEntryAdmin(admin.ModelAdmin):
-    list_display = [
-        'timestamp',
-        'zone',
-        'user',
-        'username',
-        'action',
-        'message',
-        'extra_data',
-    ]
-    list_select_related = ['zone']
-    list_filter = [
-        'zone',
-        'username',
-        'action',
-    ]
-
-    readonly_fields = [
-        'timestamp',
-        'zone',
-        'user',
-        'username',
-        'action',
-        'message',
-        'extra_data',
-    ]
-
-    def get_queryset(self, request):
-        qs = super(LogEntryAdmin, self).get_queryset(request)
-        return qs.prefetch_related('user')
-
 admin.site.register(Zone, ZoneAdmin)
-admin.site.register(LogEntry, LogEntryAdmin)
